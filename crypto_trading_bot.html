@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能虛擬貨幣自動獲利機器人</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .main-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .bot-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .status-light.active {
+            background: #2ed573;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .toggle-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, #2ed573, #17c0eb);
+            box-shadow: 0 4px 15px rgba(46, 213, 115, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .positive { color: #2ed573; }
+        .negative { color: #ff4757; }
+        .neutral { color: #ffa502; }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 400px;
+            position: relative;
+        }
+
+        .price-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .strategy-selector {
+            margin-bottom: 25px;
+        }
+
+        .strategy-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .strategy-select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .strategy-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+
+        .settings-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-group h4 {
+            margin-bottom: 15px;
+            color: #17c0eb;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-input {
+            width: 80px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-align: center;
+        }
+
+        .trades-log {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .trade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .trade-item:last-child {
+            border-bottom: none;
+        }
+
+        .trade-type {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .trade-buy {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+        }
+
+        .trade-sell {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .portfolio-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .portfolio-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .portfolio-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .risk-meter {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .risk-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ed573, #ffa502, #ff4757);
+            width: 30%;
+            transition: width 0.5s ease;
+        }
+
+        .alert {
+            background: rgba(255, 165, 2, 0.2);
+            border: 1px solid #ffa502;
+            color: #ffa502;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .performance-chart {
+            width: 100%;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .portfolio-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(46, 213, 115, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 智能虛擬貨幣獲利機器人</h1>
+            <p>AI驅動的量化交易系統 - 24/7自動化交易</p>
+        </div>
+
+        <div id="alert" class="alert">
+            <strong>風險警告:</strong> 這是一個模擬交易系統，僅供教育目的。實際交易存在風險，請謹慎投資。
+        </div>
+
+        <div class="dashboard">
+            <div class="main-panel">
+                <div class="bot-status">
+                    <div class="status-indicator">
+                        <div class="status-light" id="statusLight"></div>
+                        <span id="statusText">機器人已停止</span>
+                    </div>
+                    <button class="toggle-btn" id="toggleBot" onclick="toggleBot()">啟動機器人</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value positive" id="totalProfit">$0</div>
+                        <div class="stat-label">總獲利</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value neutral" id="todayProfit">$0</div>
+                        <div class="stat-label">今日收益</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="winRate">0%</div>
+                        <div class="stat-label">勝率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTrades">0</div>
+                        <div class="stat-label">交易次數</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas class="price-chart" id="priceChart"></canvas>
+                </div>
+
+                <div class="portfolio-section">
+                    <div class="portfolio-card">
+                        <h3>持倉組合</h3>
+                        <div id="portfolio">
+                            <div class="portfolio-item">
+                                <span>BTC</span>
+                                <span id="btcAmount">0.00000</span>
+                            </div>
+                            <div class="portfolio-item">
+                                <span>ETH</span>
+                                <span id="ethAmount">0.00000</span>
+                            </div>
+                            <div class="portfolio-item">
+                                <span>USDT</span>
+                                <span id="usdtAmount">10000.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="portfolio-card">
+                        <h3>交易記錄</h3>
+                        <div class="trades-log" id="tradesLog">
+                            <div style="text-align: center; color: #888; padding: 20px;">
+                                暫無交易記錄
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="strategy-selector">
+                    <label>交易策略</label>
+                    <select class="strategy-select" id="strategySelect" onchange="changeStrategy()">
+                        <option value="sma">SMA移動平均線</option>
+                        <option value="rsi">RSI相對強弱指標</option>
+                        <option value="macd">MACD指標</option>
+                        <option value="bollinger">布林帶策略</option>
+                        <option value="grid">網格交易</option>
+                        <option value="dca">定期定額投資</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <h4>風險管理</h4>
+                    <div class="setting-item">
+                        <span>止損比例</span>
+                        <input type="number" class="setting-input" id="stopLoss" value="5" min="1" max="20">
+                        <span>%</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>止盈比例</span>
+                        <input type="number" class="setting-input" id="takeProfit" value="10" min="5" max="50">
+                        <span>%</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>單次投入</span>
+                        <input type="number" class="setting-input" id="tradeAmount" value="100" min="10" max="1000">
+                        <span>USDT</span>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h4>技術指標參數</h4>
+                    <div class="setting-item">
+                        <span>短期MA</span>
+                        <input type="number" class="setting-input" id="shortMA" value="20" min="5" max="50">
+                    </div>
+                    <div class="setting-item">
+                        <span>長期MA</span>
+                        <input type="number" class="setting-input" id="longMA" value="50" min="20" max="200">
+                    </div>
+                    <div class="setting-item">
+                        <span>RSI週期</span>
+                        <input type="number" class="setting-input" id="rsiPeriod" value="14" min="7" max="30">
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h4>風險監控</h4>
+                    <div class="risk-meter">
+                        <div class="risk-fill" id="riskMeter"></div>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #888;">
+                        當前風險等級: <span id="riskLevel">低</span>
+                    </div>
+                </div>
+
+                <canvas class="performance-chart" id="performanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification">
+        交易執行成功！
+    </div>
+
+    <script>
+        // 機器人狀態
+        let botRunning = false;
+        let botInterval;
+        let priceData = [];
+        let trades = [];
+        let portfolio = {
+            USDT: 10000,
+            BTC: 0,
+            ETH: 0
+        };
+        
+        // 交易統計
+        let stats = {
+            totalProfit: 0,
+            todayProfit: 0,
+            totalTrades: 0,
+            winningTrades: 0
+        };
+
+        // 當前價格
+        let currentPrices = {
+            BTC: 43500,
+            ETH: 2650
+        };
+
+        // 初始化圖表
+        const priceChart = document.getElementById('priceChart');
+        const priceCtx = priceChart.getContext('2d');
+        const performanceChart = document.getElementById('performanceChart');
+        const performanceCtx = performanceChart.getContext('2d');
+
+        // 設定畫布大小
+        function resizeCanvas() {
+            priceChart.width = priceChart.offsetWidth;
+            priceChart.height = priceChart.offsetHeight;
+            performanceChart.width = performanceChart.offsetWidth;
+            performanceChart.height = performanceChart.offsetHeight;
+        }
+
+        // 生成隨機價格數據
+        function generatePriceData() {
+            const now = Date.now();
+            const btcPrice = currentPrices.BTC + (Math.random() - 0.5) * 500;
+            const ethPrice = currentPrices.ETH + (Math.random() - 0.5) * 50;
+            
+            currentPrices.BTC = Math.max(40000, Math.min(50000, btcPrice));
+            currentPrices.ETH = Math.max(2200, Math.min(3000, ethPrice));
+            
+            priceData.push({
+                time: now,
+                btc: currentPrices.BTC,
+                eth: currentPrices.ETH
+            });
+            
+            // 保持最近100個數據點
+            if (priceData.length > 100) {
+                priceData.shift();
+            }
+        }
+
+        // 繪製價格圖表
+        function drawPriceChart() {
+            if (priceData.length < 2) return;
+            
+            priceCtx.clearRect(0, 0, priceChart.width, priceChart.height);
+            
+            // 設置樣式
+            priceCtx.strokeStyle = '#ffa502';
+            priceCtx.lineWidth = 2;
+            
+            // 計算縮放
+            const minPrice = Math.min(...priceData.map(d => d.btc));
+            const maxPrice = Math.max(...priceData.map(d => d.btc));
+            const priceRange = maxPrice - minPrice;
+            
+            // 繪製BTC價格線
+            priceCtx.beginPath();
+            for (let i = 0; i < priceData.length; i++) {
+                const x = (i / (priceData.length - 1)) * priceChart.width;
+                const y = priceChart.height - ((priceData[i].btc - minPrice) / priceRange) * priceChart.height;
+                
+                if (i === 0) {
+                    priceCtx.moveTo(x, y);
+                } else {
+                    priceCtx.lineTo(x, y);
+                }
+            }
+            priceCtx.stroke();
+            
+            // 添加標籤
+            priceCtx.fillStyle = '#ffffff';
+            priceCtx.font = '14px Arial';
+            priceCtx.fillText(`BTC: $${currentPrices.BTC.toFixed(0)}`, 20, 30);
+            priceCtx.fillText(`ETH: $${currentPrices.ETH.toFixed(0)}`, 20, 50);
+        }
+
+        // 繪製收益圖表
+        function drawPerformanceChart() {
+            if (trades.length < 2) return;
+            
+            performanceCtx.clearRect(0, 0, performanceChart.width, performanceChart.height);
+            
+            // 計算累積收益
+            let cumulativeProfit = 0;
+            const profitData = trades.map(trade => {
+                cumulativeProfit += trade.profit;
+                return cumulativeProfit;
+            });
+            
+            // 設置樣式
+            performanceCtx.strokeStyle = stats.totalProfit >= 0 ? '#2ed573' : '#ff4757';
+            performanceCtx.lineWidth = 2;
+            
+            // 繪製收益線
+            performanceCtx.beginPath();
+            for (let i = 0; i < profitData.length; i++) {
+                const x = (i / (profitData.length - 1)) * performanceChart.width;
+                const maxProfit = Math.max(...profitData);
+                const minProfit = Math.min(...profitData, 0);
+                const range = Math.max(maxProfit - minProfit, 1);
+                const y = performanceChart.height - ((profitData[i] - minProfit) / range) * performanceChart.height;
+                
+                if (i === 0) {
+                    performanceCtx.moveTo(x, y);
+                } else {
+                    performanceCtx.lineTo(x, y);
+                }
+            }
+            performanceCtx.stroke();
+            
+            // 添加零軸線
+            const zeroY = performanceChart.height - ((0 - Math.min(...profitData, 0)) / Math.max(Math.max(...profitData) - Math.min(...profitData, 0), 1)) * performanceChart.height;
+            performanceCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+            performanceCtx.lineWidth = 1;
+            performanceCtx.beginPath();
+            performanceCtx.moveTo(0, zeroY);
+            performanceCtx.lineTo(performanceChart.width, zeroY);
+            performanceCtx.stroke();
+        }
+
+        // 交易邏輯
+        function executeTradeLogic() {
+            if (!botRunning || priceData.length < 50) return;
+            
+            const strategy = document.getElementById('strategySelect').value;
+            const tradeAmount = parseFloat(document.getElementById('tradeAmount').value);
+            
+            // 隨機決定交易 (實際應用中會基於技術指標)
+            if (Math.random() > 0.85) {
+                const action = Math.random() > 0.5 ? 'buy' : 'sell';
+                const coin = Math.random() > 0.5 ? 'BTC' : 'ETH';
+                
+                executeTrade(action, coin, tradeAmount);
+            }
+        }
+
+        // 執行交易
+        function executeTrade(action, coin, amount) {
+            const price = currentPrices[coin];
+            const profit = (Math.random() - 0.5) * 50; // 模擬利潤
+            
+            const trade = {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString(),
+                action: action,
+                coin: coin,
+                amount: action === 'buy' ? amount / price : amount,
+                price: price,
+                profit: profit
+            };
+            
+            trades.unshift(trade);
+            if (trades.length > 20) trades.pop();
+            
+            // 更新統計
+            stats.totalTrades++;
+            stats.totalProfit += profit;
+            stats.todayProfit += profit;
+            
+            if (profit > 0) {
+                stats.winningTrades++;
+            }
+            
+            // 更新持倉
+            if (action === 'buy') {
+                portfolio[coin] += trade.amount;
+                portfolio.USDT -= amount;
+            } else {
+                portfolio[coin] -= trade.amount;
+                portfolio.USDT += amount;
+            }
+            
+            updateDisplay();
+            addTradeToLog(trade);
+            showNotification(`${action.toUpperCase()} ${coin} 交易完成`);
+        }
+
+        // 更新顯示
+        function updateDisplay() {
+            // 更新統計數據
+            document.getElementById('totalProfit').textContent = `$${stats.totalProfit.toFixed(2)}`;
+            document.getElementById('totalProfit').className = `stat-value ${stats.totalProfit >= 0 ? 'positive' : 'negative'}`;
+            
+            document.getElementById('todayProfit').textContent = `$${stats.todayProfit.toFixed(2)}`;
+            document.getElementById('todayProfit').className = `stat-value ${stats.todayProfit >= 0 ? 'positive' : 'negative'}`;
+            
+            const winRate = stats.totalTrades > 0 ? (stats.winningTrades / stats.totalTrades * 100) : 0;
+            document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
+            document.getElementById('winRate').className = `stat-value ${winRate >= 60 ? 'positive' : winRate >= 40 ? 'neutral' : 'negative'}`;
+            
+            document.getElementById('totalTrades').textContent = stats.totalTrades;
+            
+            // 更新持倉
+            document.getElementById('btcAmount').textContent = portfolio.BTC.toFixed(5);
+            document.getElementById('ethAmount').textContent = portfolio.ETH.toFixed(5);
+            document.getElementById('usdtAmount').textContent = portfolio.USDT.toFixed(2);
+            
+            // 更新風險等級
+            updateRiskMeter();
+        }
+
+        // 更新風險儀表
+        function updateRiskMeter() {
+            const riskMeter = document.getElementById('riskMeter');
+            const riskLevel = document.getElementById('riskLevel');
+            
+            const totalValue = portfolio.USDT + (portfolio.BTC * currentPrices.BTC) + (portfolio.ETH * currentPrices.ETH);
+            const cryptoPercentage = ((totalValue - portfolio.USDT) / totalValue) * 100;
+            
+            let risk, riskText;
+            if (cryptoPercentage < 30) {
+                risk = 20;
+                riskText = '低';
+            } else if (cryptoPercentage < 60) {
+                risk = 50;
+                riskText = '中';
+            } else {
+                risk = 80;
+                riskText = '高';
+            }
+            
+            riskMeter.style.width = risk + '%';
+            riskLevel.textContent = riskText;
+        }
+
+        // 添加交易到記錄
+        function addTradeToLog(trade) {
+            const tradesLog = document.getElementById('tradesLog');
+            
+            if (tradesLog.children.length === 1 && tradesLog.children[0].style.textAlign === 'center') {
+                tradesLog.innerHTML = '';
+            }
+            
+            const tradeItem = document.createElement('div');
+            tradeItem.className = 'trade-item';
+            tradeItem.innerHTML = `
+                <div>
+                    <span class="trade-type ${trade.action === 'buy' ? 'trade-buy' : 'trade-sell'}">
+                        ${trade.action.toUpperCase()}
+                    </span>
+                    <span>${trade.coin}</span>
+                </div>
+                <div>
+                    <div>$${trade.price.toFixed(2)}</div>
+                    <div class="${trade.profit >= 0 ? 'positive' : 'negative'}" style="font-size: 0.8rem;">
+                        ${trade.profit >= 0 ? '+' : ''}$${trade.profit.toFixed(2)}
+                    </div>
+                </div>
+            `;
+            
+            tradesLog.insertBefore(tradeItem, tradesLog.firstChild);
+            
+            // 限制顯示數量
+            while (tradesLog.children.length > 10) {
+                tradesLog.removeChild(tradesLog.lastChild);
+            }
+        }
+
+        // 顯示通知
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
